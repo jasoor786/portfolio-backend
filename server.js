@@ -3,9 +3,15 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 
 const app = express();
-app.use(cors());
-app.use(express.json());
 
+// Updated wide-open CORS configuration block
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+app.use(express.json());
 // Connect to MongoDB
 const MONGO_URI = process.env.MONGO_URI || "your_mongodb_fallback_link_here";
 mongoose.connect(MONGO_URI)
