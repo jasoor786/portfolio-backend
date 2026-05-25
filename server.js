@@ -12,23 +12,60 @@ mongoose.connect(MONGO_URI)
   .then(() => console.log("MongoDB Connected"))
   .catch(err => console.log(err));
 
-// Simple Project Schema
+// --- SCHEMAS ---
 const Project = mongoose.model('Project', new mongoose.Schema({
-  title: String,
-  description: String,
-  techStack: [String],
-  liveLink: String,
-  githubLink: String
+  title: String, description: String, techStack: [String], liveLink: String, githubLink: String
 }));
 
-// API Routes
+// Task Management Schema
+const Task = mongoose.model('Task', new mongoose.Schema({
+  title: String, description: String, status: { type: String, default: 'Pending' }
+}));
+
+// --- ROUTES ---
+// Existing Portfolio Endpoint
 app.get('/api/projects', async (req, res) => {
-  try {
-    const projects = await Project.find();
-    res.json(projects);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  try { res.json(await Project.find()); } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Mock Login Authentication Endpoint
+app.post('/api/auth/login', (req, res) => {
+  const { username, password } = req.body;
+  if (username === 'admin' && password === 'admin123') {
+    res.json({ success: true, token: 'mock-jwt-token', message: 'Logged in successfully!' });
+  } else {
+    res.status(401).json({ success: false, message: 'Invalid credentials. Use admin / admin123' });
   }
+});
+
+// CRUD: Create Task
+app.post('/api/tasks', async (req, res) => {
+  try {
+    const newTask = new Task(req.body);
+    await newTask.save();
+    res.json(newTask);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// CRUD: Read Tasks
+app.get('/api/tasks', async (req, res) => {
+  try { res.json(await Task.find()); } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// CRUD: Update Task Status
+app.put('/api/tasks/:id', async (req, res) => {
+  try {
+    const updatedTask = await Task.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(updatedTask);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// CRUD: Delete Task
+app.delete('/api/tasks/:id', async (req, res) => {
+  try {
+    await Task.findByIdAndDelete(req.params.id);
+    res.json({ message: "Task deleted successfully" });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.get('/', (req, res) => res.send("Backend server is running smoothly!"));
